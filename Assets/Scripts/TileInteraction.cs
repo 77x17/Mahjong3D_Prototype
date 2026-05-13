@@ -13,6 +13,13 @@ public class TileInteraction : MonoBehaviour
     // Kích thước để kiểm tra va chạm
     private Vector3 halfExtents;
 
+    private TileController controller;
+
+    void Awake()
+    {
+        controller = GetComponent<TileController>();
+    }
+
     void Start()
     {
         tileRenderer = GetComponent<Renderer>();
@@ -28,6 +35,16 @@ public class TileInteraction : MonoBehaviour
             halfExtents = tileRenderer.bounds.extents * 0.95f;
         } else {
             halfExtents = new Vector3(0.5f, 0.5f, 0.5f);
+        }
+
+        RefreshVisual();
+    }
+
+    public void RefreshVisual()
+    {
+        if (controller != null)
+        {
+            controller.UpdateTileVisual(tileID);
         }
     }
 
@@ -75,6 +92,11 @@ public class TileInteraction : MonoBehaviour
 
             isSelected = true;
             tileRenderer.material.color = highlightColor;
+
+            if (controller != null)
+            {
+                controller.SetImageColor(highlightColor);
+            }
             
             if (GameManager.Instance != null)
                 GameManager.Instance.SelectTile(this);
@@ -92,6 +114,11 @@ public class TileInteraction : MonoBehaviour
     {
         isSelected = false;
         tileRenderer.material.color = originalColor;
+
+        if (controller != null)
+        {
+            controller.SetImageColor(Color.white);
+        }
     }
 
     // Các hàm bắt sự kiện chuột từ Unity

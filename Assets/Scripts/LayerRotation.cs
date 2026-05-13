@@ -4,12 +4,13 @@ using System.Collections;
 public class LayerRotation : MonoBehaviour
 {
     public int layerIndex;
-    private float holdTime = 0.15f; 
+    private float holdTime = 0.2f; 
+    private float thresholdSpace = 10f; // Khoảng cách tối thiểu để bắt đầu xoay
     private float timer = 0;
     private bool isDragging = false;
     
     private Vector3 lastMousePos;
-    public float rotationSpeed = 0.4f; // Chỉnh tốc độ xoay tại đây
+    public float rotationSpeed = 0.1f; // Chỉnh tốc độ xoay tại đây
     public float snapAngle = 15f;    // Góc để khớp (nên tính dựa trên số tile mỗi vòng)
 
     public void StartManualDrag()
@@ -35,7 +36,7 @@ public class LayerRotation : MonoBehaviour
         Vector3 delta = currentPos - lastMousePos;
 
         // Nếu chuột di chuyển đủ xa hoặc giữ đủ lâu thì coi là xoay
-        if (delta.magnitude > 2f || timer > holdTime)
+        if (delta.magnitude > thresholdSpace || timer > holdTime)
         {
             isDragging = true;
             // Xoay layer quanh trục Y

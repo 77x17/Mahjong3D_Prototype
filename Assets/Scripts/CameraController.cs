@@ -19,6 +19,10 @@ public class CameraController : MonoBehaviour
     private float x = 0.0f;
     private float y = 20.0f;
 
+    private float smoothTime = 5.0f; // Số càng cao càng mượt nhưng sẽ có độ trễ
+    private float currentX = 0.0f;
+    private float currentY = 0.0f;
+
     void Start()
     {
         if (target == null) {
@@ -36,18 +40,23 @@ public class CameraController : MonoBehaviour
     {
         if (target)
         {
-            // 1. Xoay Camera bằng chuột phải
             if (Input.touchCount == 2)
             {
                 Touch touch0 = Input.GetTouch(0);
+                
+                // CẢI TIẾN 1: Dựa trên DPI để tốc độ ổn định trên mọi điện thoại
+                // Chia cho Screen.dpi giúp giá trị không bị quá lớn trên màn hình độ phân giải cao
+                float dpiMultiplier = 60f / (Screen.dpi > 0 ? Screen.dpi : 100);
 
                 if (touch0.phase == TouchPhase.Moved)
                 {
-                    x += touch0.deltaPosition.x * xSpeed * 0.2f; // Nhân với 0.2 để giảm tốc độ xoay trên di động
-                    y -= touch0.deltaPosition.y * ySpeed * 0.2f;
+                    // Giảm hệ số xuống thêm nếu vẫn thấy nhanh (ở đây dùng 0.1f)
+                    x += touch0.deltaPosition.x * xSpeed * dpiMultiplier * 0.5f;
+                    y -= touch0.deltaPosition.y * ySpeed * dpiMultiplier * 0.5f;
                     y = Mathf.Clamp(y, yMinLimit, yMaxLimit);
                 }
 
+                // Xử lý Zoom (Pinch)
                 Touch touch1 = Input.GetTouch(1);
                 Vector2 prevPos0 = touch0.position - touch0.deltaPosition;
                 Vector2 prevPos1 = touch1.position - touch1.deltaPosition;
@@ -55,7 +64,8 @@ public class CameraController : MonoBehaviour
                 float currentMag = (touch0.position - touch1.position).magnitude;
                 float diff = currentMag - prevMag;
 
-                distance -= diff * scrollSpeed * 0.01f;
+                // Zoom cũng cần dựa trên DPI để không bị quá nhạy
+                distance -= diff * scrollSpeed * dpiMultiplier * 0.1f;
                 distance = Mathf.Clamp(distance, minDistance, maxDistance);
             }
             else if (Input.GetMouseButton(1) && Input.touchCount < 2)
@@ -65,23 +75,21 @@ public class CameraController : MonoBehaviour
                 y = Mathf.Clamp(y, yMinLimit, yMaxLimit);
             }
 
-            // 2. ZOOM bằng cuộn chuột
+            // Zoom bằng cuộn chuột (PC)
             float scroll = Input.GetAxis("Mouse ScrollWheel");
             if (scroll != 0)
             {
-                // Trừ vì cuộn lên thường là tiến gần (giảm distance)
                 distance -= scroll * scrollSpeed;
-                // Giới hạn khoảng cách trong tầm cho phép
                 distance = Mathf.Clamp(distance, minDistance, maxDistance);
             }
 
-            // 3. Tính toán Rotation dựa trên x và y
-            Quaternion rotation = Quaternion.Euler(y, x, 0);
+            // CẢI TIẾN 2: Nội suy (Lerp) để tạo cảm giác trôi mượt mà
+            currentX = Mathf.Lerp(currentX, x, Time.deltaTime * smoothTime);
+            currentY = Mathf.Lerp(currentY, y, Time.deltaTime * smoothTime);
 
-            // 4. Tính toán Vị trí mới (Position) dựa trên distance đã zoom
+            Quaternion rotation = Quaternion.Euler(currentY, currentX, 0);
             Vector3 position = target.position + (rotation * new Vector3(0, 0, -distance));
 
-            // 5. Áp dụng Vị trí và Hướng nhìn
             transform.position = position;
             transform.LookAt(target);
         }
