@@ -11,14 +11,14 @@ public class LayerRotation : MonoBehaviour
     private bool isDragging = false;
     
     private Camera mainCam;
-    private float startAngle;
-    private float initialRotationY;
-
     public float rotationSpeed = 0.5f; // Với cách tính mới, để 1.0 là mặc định
     public float snapAngle = 15f; 
     public float snapSpeed = 15f;
+    private float lastMouseAngle;
 
     private bool canRotate = false;
+    private float accumulatedAngle = 0f; // Tổng góc đã xoay kể từ tiếng kêu trước
+    public float angleStepForSound = 50f;
 
     void Start()
     {
@@ -34,10 +34,8 @@ public class LayerRotation : MonoBehaviour
 
         if (!canRotate) return;
         
-        // Lưu góc xoay ban đầu của layer và góc của chuột so với tâm
-        initialRotationY = transform.eulerAngles.y;
-        startAngle = GetMouseAngle();
-        
+        lastMouseAngle = GetMouseAngle();
+
         StopAllCoroutines(); 
     }
 
@@ -54,21 +52,30 @@ public class LayerRotation : MonoBehaviour
         timer += Time.deltaTime;
         float currentMouseAngle = GetMouseAngle();
         
-        // Tính độ chênh lệch góc (Delta Angle)
-        // Mathf.DeltaAngle giúp xử lý vấn đề nhảy góc khi đi qua điểm 0/360 độ
-        float angleDelta = Mathf.DeltaAngle(currentMouseAngle, startAngle);
+        float delta = Mathf.DeltaAngle(currentMouseAngle, lastMouseAngle);
+        lastMouseAngle = currentMouseAngle;
 
-        if (Mathf.Abs(angleDelta) > thresholdSpace || timer > holdTime)
+        if (Mathf.Abs(delta) > thresholdSpace || timer > holdTime)
         {
-            if (!isDragging || timer > soundTime) {
+            if (!isDragging) {
                 AudioManager.Instance.PlaySFX("drag");
                 isDragging = true;
-                timer = 0;
-            }
+                timer = 0.0f;
+                accumulatedAngle = 0.0f;
+            } 
             
-            // Xoay dựa trên sự thay đổi góc của chuột quanh tâm vật thể
-            float newRotationY = initialRotationY - (angleDelta * rotationSpeed);
-            transform.rotation = Quaternion.Euler(0, newRotationY, 0);
+            if (isDragging) {
+                float rotationAmount = -delta * rotationSpeed;
+                transform.Rotate(Vector3.up, -delta * rotationSpeed);
+
+                accumulatedAngle += Mathf.Abs(rotationAmount);
+                if (accumulatedAngle >= angleStepForSound && timer >= soundTime)
+                {
+                    AudioManager.Instance.PlaySFX("drag");
+                    accumulatedAngle -= angleStepForSound;
+                    timer -= soundTime;
+                }
+            }
         }
     }
 

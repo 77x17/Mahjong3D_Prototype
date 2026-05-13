@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 public class TileInteraction : MonoBehaviour
 {
@@ -17,10 +18,13 @@ public class TileInteraction : MonoBehaviour
 
     public bool isBlocked { get; private set; }
 
+    private Vector3 originalScale;
+
     void Awake()
     {
         controller = GetComponent<TileController>();
         tileRenderer = GetComponent<Renderer>();
+        originalScale = transform.localScale;
     }
 
     void Start()
@@ -81,6 +85,9 @@ public class TileInteraction : MonoBehaviour
     // Hàm xử lý logic chọn Mahjong (được gọi từ LayerRotation)
     public void HandleSelection()
     {
+        StopAllCoroutines(); // Tránh việc bấm liên tục gây lỗi scale
+        StartCoroutine(PulseEffect());
+
         if (!isSelected)
         {
             if (IsBlockedByLogic())
@@ -111,6 +118,31 @@ public class TileInteraction : MonoBehaviour
             if (GameManager.Instance != null)
                 GameManager.Instance.RemoveTileFromList(this);
         }
+    }
+
+    private IEnumerator PulseEffect()
+    {
+        float duration = 0.1f; // Thời gian thu nhỏ
+        Vector3 shrinkScale = originalScale * 0.9f;
+
+        // Thu nhỏ
+        float elapsed = 0;
+        while (elapsed < duration)
+        {
+            transform.localScale = Vector3.Lerp(originalScale, shrinkScale, elapsed / duration);
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        // Phóng to lại
+        elapsed = 0;
+        while (elapsed < duration)
+        {
+            transform.localScale = Vector3.Lerp(shrinkScale, originalScale, elapsed / duration);
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        transform.localScale = originalScale;
     }
 
     public void Deselect()
