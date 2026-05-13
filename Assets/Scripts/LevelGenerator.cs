@@ -8,7 +8,6 @@ public class LevelGenerator : MonoBehaviour
 
     private int layers = 4;
     private int ringsPerLayer = 4;
-    private float padding = 0.5f; // Khoảng hở nhỏ giữa các khối để tránh dính sát
     private float spacingMultiplier = 1.1f; // Hệ số giãn cách (1.1 = 110%)
 
     private List<Transform> layerParents = new List<Transform>();
@@ -20,8 +19,6 @@ public class LevelGenerator : MonoBehaviour
 
     void GenerateLevel()
     {
-        // spawnPositions.Clear();
-
         // 1. LẤY KÍCH THƯỚC KHỐI TỪ PREFAB
         // Tạo một bản tạm để đo kích thước nếu prefab chưa có thông tin
         MeshRenderer renderer = tilePrefab.GetComponentInChildren<MeshRenderer>();
@@ -87,27 +84,18 @@ public class LevelGenerator : MonoBehaviour
                         0, 
                         Mathf.Sin(currentAngle) * radius
                     );
-                    // spawnPositions.Add(pos);
-                    // allPositions.Add(pos);
                     allPositions.Add(localPos);
                     layerIndices.Add(l);
                 }
             }
         }
 
-        // 3. ĐẢM BẢO CHIA HẾT CHO 3
-        // int remainder = spawnPositions.Count % 3;
-        // if (remainder != 0)
-        // {
-        //     spawnPositions.RemoveRange(spawnPositions.Count - remainder, remainder);
-        // }
-
         // 4. TẠO ID THEO BỘ 3
         List<int> idList = new List<int>();
-        for (int i = 0; i < allPositions.Count / 3; i++)
+        for (int i = 0; i < allPositions.Count / 6; i++)
         {
-            // idList.Add(i); idList.Add(i); idList.Add(i);
-            idList.Add(1); idList.Add(2); idList.Add(3);
+            idList.Add(1); idList.Add(2); idList.Add(3); 
+            idList.Add(4); idList.Add(5); idList.Add(6);
         }
 
         // Trộn ID

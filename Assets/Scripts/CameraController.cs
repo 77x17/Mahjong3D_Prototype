@@ -37,7 +37,28 @@ public class CameraController : MonoBehaviour
         if (target)
         {
             // 1. Xoay Camera bằng chuột phải
-            if (Input.GetMouseButton(1))
+            if (Input.touchCount == 2)
+            {
+                Touch touch0 = Input.GetTouch(0);
+
+                if (touch0.phase == TouchPhase.Moved)
+                {
+                    x += touch0.deltaPosition.x * xSpeed * 0.2f; // Nhân với 0.2 để giảm tốc độ xoay trên di động
+                    y -= touch0.deltaPosition.y * ySpeed * 0.2f;
+                    y = Mathf.Clamp(y, yMinLimit, yMaxLimit);
+                }
+
+                Touch touch1 = Input.GetTouch(1);
+                Vector2 prevPos0 = touch0.position - touch0.deltaPosition;
+                Vector2 prevPos1 = touch1.position - touch1.deltaPosition;
+                float prevMag = (prevPos0 - prevPos1).magnitude;
+                float currentMag = (touch0.position - touch1.position).magnitude;
+                float diff = currentMag - prevMag;
+
+                distance -= diff * scrollSpeed * 0.01f;
+                distance = Mathf.Clamp(distance, minDistance, maxDistance);
+            }
+            else if (Input.GetMouseButton(1) && Input.touchCount < 2)
             {
                 x += Input.GetAxis("Mouse X") * xSpeed;
                 y -= Input.GetAxis("Mouse Y") * ySpeed;

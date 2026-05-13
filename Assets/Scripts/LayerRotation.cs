@@ -22,10 +22,17 @@ public class LayerRotation : MonoBehaviour
 
     public void UpdateManualDrag()
     {
+        if (Input.touchCount > 1)
+        {
+            isDragging = false; 
+            return;
+        }
+
         timer += Time.deltaTime;
         
         // Tính toán độ di chuyển của chuột
-        Vector3 delta = Input.mousePosition - lastMousePos;
+        Vector3 currentPos = Input.mousePosition;
+        Vector3 delta = currentPos - lastMousePos;
 
         // Nếu chuột di chuyển đủ xa hoặc giữ đủ lâu thì coi là xoay
         if (delta.magnitude > 2f || timer > holdTime)
@@ -34,7 +41,7 @@ public class LayerRotation : MonoBehaviour
             // Xoay layer quanh trục Y
             transform.Rotate(Vector3.up, -delta.x * rotationSpeed, Space.Self);
         }
-        lastMousePos = Input.mousePosition;
+        lastMousePos = currentPos;
     }
 
     public void EndManualDrag(TileInteraction tile)
