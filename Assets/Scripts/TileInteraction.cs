@@ -5,7 +5,7 @@ public class TileInteraction : MonoBehaviour
     public int tileID;
     public int layerIndex;
     public Color highlightColor = Color.yellow;
-    private Color originalColor;
+    private Color originalColor = Color.white;
     private Renderer tileRenderer;
     private bool isSelected = false;
     private LayerRotation parentLayer;
@@ -15,17 +15,16 @@ public class TileInteraction : MonoBehaviour
 
     private TileController controller;
 
+    public bool isBlocked { get; private set; }
+
     void Awake()
     {
         controller = GetComponent<TileController>();
+        tileRenderer = GetComponent<Renderer>();
     }
 
     void Start()
     {
-        tileRenderer = GetComponent<Renderer>();
-        if (tileRenderer != null)
-            originalColor = tileRenderer.material.color;
-
         // Tìm script LayerRotation ở đối tượng cha (Layer_x)
         parentLayer = GetComponentInParent<LayerRotation>();
 
@@ -86,9 +85,13 @@ public class TileInteraction : MonoBehaviour
         {
             if (IsBlockedByLogic())
             {
+                AudioManager.Instance.PlaySFX("wrong");
+
                 Debug.Log("Không thể chọn vì bị tầng trên đè!");
                 return;
             }
+
+            AudioManager.Instance.PlaySFX("select");
 
             isSelected = true;
             tileRenderer.material.color = highlightColor;
@@ -124,7 +127,7 @@ public class TileInteraction : MonoBehaviour
     // Các hàm bắt sự kiện chuột từ Unity
     void OnMouseDown() 
     {
-        if (parentLayer != null) parentLayer.StartManualDrag();
+        if (parentLayer != null) parentLayer.StartManualDrag(this.isBlocked);
     }
 
     void OnMouseDrag() 
@@ -135,5 +138,29 @@ public class TileInteraction : MonoBehaviour
     void OnMouseUp() 
     {
         if (parentLayer != null) parentLayer.EndManualDrag(this);
+    }
+
+    // Hàm đổi trạng thái và màu sắc
+    public void SetBlocked(bool state)
+    {
+        isBlocked = state;
+
+        if (isBlocked && isSelected)
+        {
+            isSelected = false;
+
+            GameManager.Instance.RemoveTileFromList(this);
+        }
+
+        if (tileRenderer != null)
+        {
+            // Nếu bị chặn thì màu xám, không thì trả về màu gốc
+            tileRenderer.material.color = state ? Color.gray : (isSelected ? highlightColor : originalColor);
+        }
+        if (controller != null)
+        {
+            controller.SetImageColor(state ? Color.gray : (isSelected ? highlightColor : originalColor));
+        }
+        // Debug.Log($"Tile {tileID} set blocked: {state}.");
     }
 }

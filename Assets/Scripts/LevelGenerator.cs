@@ -5,16 +5,33 @@ using TMPro;
 public class LevelGenerator : MonoBehaviour
 {
     public GameObject tilePrefab;
-
     private int layers = 4;
     private int ringsPerLayer = 4;
     private float spacingMultiplier = 1.1f; // Hệ số giãn cách (1.1 = 110%)
 
     private List<Transform> layerParents = new List<Transform>();
 
+    public LayerMask tileLayerMask;
+
     void Start()
     {
         GenerateLevel();
+        GameManager.Instance.CheckBlockingTiles();
+    }
+    
+    void AdjustCamera(float radius)
+    {
+        CameraController camCtrl = FindFirstObjectByType<CameraController>();
+        if (camCtrl != null)
+        {
+            // Đảm bảo target của Camera là tâm của Level (thường là vị trí của Generator)
+            camCtrl.target = this.transform; 
+            camCtrl.FitLevel(radius);
+        }
+        else
+        {
+            Debug.Log("[Bug] - Không tìm thấy Object CameraController");
+        }
     }
 
     void GenerateLevel()
@@ -27,6 +44,9 @@ public class LevelGenerator : MonoBehaviour
         float tileHeight = tileSize.y + 0.1f;
         float safeWidth = Mathf.Max(tileSize.x, tileSize.z) * spacingMultiplier;
 
+        float maxLevelRadius = (ringsPerLayer - 1) * safeWidth + (safeWidth / 2f);
+        AdjustCamera(maxLevelRadius);
+        
         // --- TÍNH TOÁN SNAP ANGLE DỰA TRÊN VÒNG NGOÀI CÙNG ---
         // Bán kính vòng ngoài cùng
         float outerRadius = (ringsPerLayer - 1) * safeWidth;

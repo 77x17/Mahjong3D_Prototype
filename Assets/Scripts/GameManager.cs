@@ -44,6 +44,11 @@ public class GameManager : MonoBehaviour
 
         selectedTiles.Add(tile);
 
+        if (selectedTiles.Count == 2)
+        {
+            CheckPreviousMatch();
+        }
+
         if (selectedTiles.Count == 3)
         {
             CheckMatch();
@@ -58,13 +63,31 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    void CheckPreviousMatch()
+    {
+        if (selectedTiles[0].tileID != selectedTiles[1].tileID)
+        {
+            AudioManager.Instance.PlaySFX("wrong");
+
+            // Không khớp -> Bỏ chọn tất cả
+            foreach (var t in selectedTiles) t.Deselect();
+
+            selectedTiles.Clear();
+        }
+    }
+
     void CheckMatch()
     {
         if (selectedTiles[0].tileID == selectedTiles[1].tileID && 
             selectedTiles[1].tileID == selectedTiles[2].tileID)
         {
+            AudioManager.Instance.PlaySFX("break");
             // Khớp nhau -> Xóa
+            HashSet<int> layersToUpdate = new HashSet<int>();
             foreach (var t in selectedTiles) {
+                int savedLayerIndex = t.layerIndex;
+                layersToUpdate.Add(savedLayerIndex);
+                
                 UnregisterTile(t);
                 Destroy(t.gameObject);
 
@@ -77,10 +100,18 @@ public class GameManager : MonoBehaviour
                     case 6: countTile6 = Mathf.Max(0, countTile6 - 1); countTile6Text.text = $"{countTile6}"; break;
                 }
             }
+
+            foreach (int index in layersToUpdate)
+            {
+                UpdateAffectedLayers(index);
+            }
+            
             Debug.Log("Đã xóa 3 khối giống nhau!");
         }
         else
         {
+            AudioManager.Instance.PlaySFX("wrong");
+
             // Không khớp -> Bỏ chọn tất cả
             foreach (var t in selectedTiles) t.Deselect();
             Debug.Log("Không khớp, thử lại!");
@@ -91,5 +122,54 @@ public class GameManager : MonoBehaviour
     // Khi tile bị xóa, phải xóa khỏi danh sách allTiles
     public void UnregisterTile(TileInteraction tile) {
         allTiles.Remove(tile);
+    }
+
+    public void CheckBlockingTiles()
+    {
+        Debug.Log("Checking blocking tiles for " + allTiles.Count + " tiles.");
+        foreach (TileInteraction tile in allTiles)
+        {
+            tile.SetBlocked(tile.IsBlockedByLogic());
+        }
+    }
+
+    public void CheckBlockingForLayer(int layerIndex)
+    {
+        // Tìm tất cả các gạch thuộc layer cụ thể này
+        foreach (TileInteraction tile in allTiles)
+        {
+            if (tile.layerIndex == layerIndex)
+            {
+                // Cập nhật trạng thái bị chặn cho từng viên trong layer này
+                tile.SetBlocked(tile.IsBlockedByLogic());
+            }
+        }
+    }
+    public void UpdateAffectedLayers(int changedLayerIndex)
+    {
+        if (changedLayerIndex > 0) 
+        {
+            CheckBlockingForLayer(changedLayerIndex - 1);
+        }
+    }
+
+    public void CheckBlockedSelectedTiles()
+    {
+        for (int i = selectedTiles.Count - 1; i >= 0; i--)
+        {
+            TileInteraction tile = selectedTiles[i];
+
+            if (tile == null) continue;
+
+            if (tile.IsBlockedByLogic())
+            {
+                Debug.Log($"Khối {tile.tileID} trong danh sách chọn đã bị chặn sau khi xoay!");
+                    
+                // CÁCH 1: Trả khối đó về trạng thái bị chặn (màu xám) và xóa khỏi danh sách chọn
+                tile.Deselect();
+                tile.SetBlocked(true);
+                selectedTiles.RemoveAt(i);
+            }
+        }
     }
 }
