@@ -23,6 +23,8 @@ public class GameManager : MonoBehaviour
 
     Vector3 actualTileSize;
 
+    [SerializeField] private GameObject breakParticlePrefab;
+
     void Awake() { 
         Instance = this; 
 
@@ -141,7 +143,7 @@ public class GameManager : MonoBehaviour
 
     IEnumerator AnimateMatchSuccess(List<TileInteraction> tiles)
     {
-        float flyDuration = 0.5f;   
+        float flyDuration = 0.3f;   
         float waitDuration = 0.2f;  
         float crushDuration = 0.1f;
         float elapsed = 0;
@@ -250,6 +252,16 @@ public class GameManager : MonoBehaviour
                 tiles[i].transform.localScale = Vector3.Lerp(targetScales[i], Vector3.zero, easeIn);
             }
             yield return null;
+        }
+
+        if (breakParticlePrefab != null)
+        {
+            // Sinh ra hiệu ứng tại vị trí finalCenter (tâm va chạm)
+            GameObject fx = Instantiate(breakParticlePrefab, finalCenter, Quaternion.identity);
+            
+            // Xóa object hiệu ứng sau một khoảng thời gian (ví dụ 1.5 giây) 
+            // để tránh rác bộ nhớ. Hãy điều chỉnh số 1.5f bằng với thời gian chạy của Particle.
+            Destroy(fx, 1.5f);
         }
 
         foreach (var t in tiles) if (t != null) Destroy(t.gameObject);

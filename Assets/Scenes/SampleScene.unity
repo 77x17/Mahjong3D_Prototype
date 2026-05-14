@@ -2642,6 +2642,7 @@ MonoBehaviour:
   countTile4Text: {fileID: 1612092504}
   countTile5Text: {fileID: 460796702}
   countTile6Text: {fileID: 1395907156}
+  breakParticlePrefab: {fileID: 5217287770146847994, guid: 1df27a603ce9dce4aaa82e9edb00955b, type: 3}
 --- !u!4 &2130556909
 Transform:
   m_ObjectHideFlags: 0
